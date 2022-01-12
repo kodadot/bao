@@ -36,7 +36,7 @@ def post_to_cf(name, content, type):
 def store_to_durable_object(kv_list):
   keys = dict(kv_list)
   res = post(CF_DURABLE_OBJECT + '/write', json=keys)
-  print(res.status_code)
+  info(f'[OBJECT]: ❄️ {res.status_code}')
   
 
 
@@ -65,11 +65,11 @@ def fetch_one(item):
 def init():
   for i in range(0, 2):
     with open(f'meta/chunk{i}.json') as f:
-      info(f'[CHUNK]: Running chunk {i}')
+      info(f'[CHUNK]: 🎲 Running chunk {i}')
       meta = load(f)
       final = fetch_all(meta)
       store_to_durable_object(final)
-      info(f'[CHUNK]: OK {i}')
+      info(f'[CHUNK]: ✅ {i}')
 
 def full_init():
   with open('meta.json') as meta_file:
