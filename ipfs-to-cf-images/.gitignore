@@ -1,3 +1,4 @@
 .env
 res/
 __pycache__/
+meta/

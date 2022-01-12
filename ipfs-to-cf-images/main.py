@@ -3,35 +3,35 @@ from requests import get, post
 from dotenv import load_dotenv
 from os import getenv
 from logging import info, basicConfig, INFO
+from signal import signal, SIGINT
+
+from utils import only_with_value, map_to_kv
 
 load_dotenv()
 
-PINATA_BASE_API = "https://kodadot.mypinata.cloud/"
-IPFS_PREFIX = "ipfs://"
-FULL_IPFS_PREFIX = "ipfs://ipfs/"
-CF_IMAGES_URI = "https://api.cloudflare.com/client/v4/accounts/b3f9fdfd827152316d080a5ddee59915/images/v1"
-HEADERS={"Authorization": f"Bearer {getenv('API_KEY')}"}
+ACCOUNT = getenv('ACCOUNT')
+API_KEY = getenv('API_KEY')
+
+CF_IMAGES_URI = f"https://api.cloudflare.com/client/v4/accounts/{ACCOUNT}/images/v1"
+HEADERS={"Authorization": f"Bearer {API_KEY}"}
 CF_DURABLE_OBJECT = "https://durable-jpeg.kodadot.workers.dev"
 
-def map_to_kv(meta):
-  return {
-    'id': meta['id'].replace(FULL_IPFS_PREFIX, ""),
-    'value': unwrap_or_default(meta['image'], '').replace(IPFS_PREFIX, PINATA_BASE_API),
-  }
+def handle_sigint(signal_received, frame):
+  print('\n\nSIGINT or CTRL-C detected. Exiting gracefully')
+  exit(1)
 
-def unwrap_or_default(value, default):
-  if value is None:
-    return default
-  return value
-
-def only_with_value(meta):
-  return meta['value'] != ''
+signal(SIGINT, handle_sigint)
 
 def post_to_cf(name, content, type):
   files = {'file': (name, content, type)}
   res = post(CF_IMAGES_URI, files=files, headers=HEADERS)
-  val = res.json()
-  return val['result']['id']
+  info(f'[CF]: {res.status_code}')
+  if res.status_code == 200:
+    val = res.json()
+    return val['result']['id']
+  else: 
+    info(f'[ERR]: {name}, {type} https://http.cat/{res.status_code}')
+    return None
 
 def store_to_durable_object(kv_list):
   keys = dict(kv_list)
@@ -46,7 +46,8 @@ def fetch_all(meta):
     info(f'[ALL]: Processing {item["id"]}')
     name, value, type = fetch_one(item)
     cloudflare_image_uuuid = post_to_cf(name, value, type)
-    final.append((cloudflare_image_uuuid, item['id']))
+    if cloudflare_image_uuuid is not None:
+      final.append(cloudflare_image_uuuid)
   return final
 
 
@@ -62,8 +63,15 @@ def fetch_one(item):
   
 
 def init():
-  basicConfig(format='%(levelname)s: %(message)s', level=INFO)
-  info('[APP]: Running')
+  for i in range(0, 2):
+    with open(f'meta/chunk{i}.json') as f:
+      info(f'[CHUNK]: Running chunk {i}')
+      meta = load(f)
+      final = fetch_all(meta)
+      store_to_durable_object(final)
+      info(f'[CHUNK]: OK {i}')
+
+def full_init():
   with open('meta.json') as meta_file:
       meta = load(meta_file)
       unwrapped = meta['data']['meta']
@@ -73,4 +81,6 @@ def init():
       return post_to_cf(all)
 
 if __name__ == '__main__':
+  basicConfig(format='%(levelname)s: %(message)s', level=INFO)
+  info('[APP]: Running')
   init()
