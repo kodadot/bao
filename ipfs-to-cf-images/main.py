@@ -11,6 +11,8 @@ load_dotenv()
 
 ACCOUNT = getenv('ACCOUNT')
 API_KEY = getenv('API_KEY')
+START_AT = int(getenv('START_AT')) if getenv('START_AT') else 0
+OFFSET = int(getenv('OFFSET')) if getenv('OFFSET') else 2
 
 CF_IMAGES_URI = f"https://api.cloudflare.com/client/v4/accounts/{ACCOUNT}/images/v1"
 HEADERS={"Authorization": f"Bearer {API_KEY}"}
@@ -63,9 +65,9 @@ def fetch_one(item):
   
 
 def init():
-  for i in range(0, 2):
+  for i in range(START_AT, START_AT + OFFSET):
     with open(f'meta/chunk{i}.json') as f:
-      info(f'[CHUNK]: 🎲 Running chunk {i}')
+      info(f'[INIT]: 🎲 Starting at {i} of {START_AT + OFFSET}')
       meta = load(f)
       final = fetch_all(meta)
       store_to_durable_object(final)
