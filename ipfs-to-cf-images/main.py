@@ -25,12 +25,12 @@ signal(SIGINT, handle_sigint)
 def post_to_cf(name, content, type):
   files = {'file': (name, content, type)}
   res = post(CF_IMAGES_URI, files=files, headers=HEADERS)
-  info(f'[CF]: {res.status_code}')
+  info(f'[🔥]: {res.status_code}')
   if res.status_code == 200:
     val = res.json()
     return val['result']['id']
   else: 
-    info(f'[ERR]: {name}, {type} https://http.cat/{res.status_code}')
+    info(f'[🔥❌]: {name}, {type} https://http.cat/{res.status_code}')
     return None
 
 def store_to_durable_object(kv_list):
@@ -47,7 +47,7 @@ def fetch_all(meta):
     name, value, type = fetch_one(item)
     cloudflare_image_uuuid = post_to_cf(name, value, type)
     if cloudflare_image_uuuid is not None:
-      final.append(cloudflare_image_uuuid)
+      final.append((item['id'], cloudflare_image_uuuid))
   return final
 
 
