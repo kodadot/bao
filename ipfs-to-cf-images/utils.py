@@ -2,9 +2,11 @@ from logging import info, warn
 from collections import namedtuple
 from aiohttp import ClientSession
 from os import getenv
+from requests import post as post_request
+from dotenv import load_dotenv
 
 from my_queue import add_task
-
+load_dotenv()
 ACCOUNT = getenv('ACCOUNT')
 API_KEY = getenv('API_KEY')
 
@@ -41,7 +43,7 @@ async def post(session, url, body):
         return response   
 
 async def post_file(session, url, body, headers=HEADERS):
-    async with session.post(url, files=body, headers=headers) as response:
+    async with session.post(url, data=body, headers=headers) as response:
         if response.status == 200:
           val = response.json()
           return val['result']['id']
@@ -64,26 +66,31 @@ async def fetch_one(item):
     suffix = type.split('/')[1]
     name = item['id'] + '.' + suffix
     content = res['value']
-    save_file(name, content)
+    save_file(name, content, 'res/')
     info(f'[DONE Fetch one]: {name}')
-    # await add_task(map_post_to_cf((name, content, type, item['id'])))
+    await add_task(map_post_to_cf((name, content, type, item['id'])))
 
 async def post_to_cf(value):
-  info(f'[post_to_cf]: {value}')
   name, content, type, original_id = value
+  info(f'[post_to_cf]: {CF_IMAGES_URI} {name}, {type}, {original_id}')
   files = {'file': (name, content, type)}
-  async with ClientSession() as session:
-    res = await post_file(session, CF_IMAGES_URI, files, HEADERS)
-    if res is not None:
-      kv = {
-        'key': original_id,
-        'value': res,
-      }
-      await add_task(map_to_durable_object(kv))
+  res = post_request(CF_IMAGES_URI, files=files, headers=HEADERS)
+  info(f'[🔥]: {res.status_code}')
+  if res.status_code == 200:
+    val = res.json()
+    value = val['result']['id']
+    kv = {
+      'key': original_id,
+      'value': value,
+    }
+    await add_task(map_to_durable_object(kv))
+  else: 
+    info(f'[🔥❌]: {res.reason} {name}, {type} https://http.cat/{res.status_code}')
+  
 
 async def store_to_durable_object(kv):
   async with ClientSession() as session:
-    res = await post(session, CF_DURABLE_OBJECT, kv)
+    res = await post(session, CF_DURABLE_OBJECT + '/upload', kv)
     info(f'[DURABLE OBJECT]: {res.status} {kv}')
 
 def map_fetch_one(item):
