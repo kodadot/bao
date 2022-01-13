@@ -42,30 +42,30 @@ async def post(session, url, body):
     async with session.post(url, json=body) as response:
         return response   
 
-async def post_file(session, url, body, headers=HEADERS):
+async def post_file(session, url, body, headers=HEADERS, name=''):
   async with session.post(url, data=body, headers=headers) as response:
       if response.status == 200:
-        info(f'[ASYNC 🔥]: {response.status}')
+        info(f'[ASYNC 🔥]: {response.status} {name}')
         val = await response.json()
         return val['result']['id']
       else: 
-        warn(f'[🔥❌]: {type} https://http.cat/{res.status}')
+        warn(f'[🔥❌]: {name} https://http.cat/{response.status}')
         return None
 
 
-def post_file_sync(url, body, headers=HEADERS):
+def post_file_sync(url, body, headers=HEADERS, name=''):
   res = post_request(url, data=body, headers=headers)
   if res.status_code == 200:
-    info(f'[🔥]: {res.status_code}')
+    info(f'[🔥]: {res.status_code} {name}')
     val = res.json()
     return val['result']['id']
   else: 
     info(f'[🔥❌]: {type} https://http.cat/{res.status_code}')
     return None
 
-async def post_file_async(url, body, headers=HEADERS):
+async def post_file_async(url, body, headers=HEADERS, name=''):
   async with ClientSession() as session:
-    res = await post_file(session, url, body, headers)
+    res = await post_file(session, url, body, headers, name)
     return res
 
 Task = namedtuple("Task", ['handler','value'])
@@ -75,7 +75,6 @@ def save_file(file_name, data, path='./'):
     outfile.write(data)
 
 async def fetch_one(item):
-  info(f'[fetch_one]: {item}')
   async with ClientSession() as session:
     info(f'[🌎]: Fetching {item["id"]}')
     res = await fetch(session, item['value'])
@@ -88,11 +87,11 @@ async def fetch_one(item):
 
 async def post_to_cf(value):
   name, content, type, original_id = value
-  info(f'[🗂]: Processing {name}')
+  info(f'[🗂 ]: Processing {name}')
   # files = {'file': (name, content, type)}
   form = FormData()
   form.add_field("file", content, filename=name, content_type=type)
-  res = await post_file_async(CF_IMAGES_URI, form, headers=HEADERS)
+  res = await post_file_async(CF_IMAGES_URI, form, headers=HEADERS, name=name)
   kv = {
     'key': original_id,
     'value': res
