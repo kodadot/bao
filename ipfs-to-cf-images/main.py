@@ -1,11 +1,14 @@
+import asyncio
 from json import load
 from requests import get, post
 from dotenv import load_dotenv
-from os import getenv
+from os import getenv, wait
 from logging import info, basicConfig, INFO
 from signal import signal, SIGINT
+from async_lib import dispatch
+from my_queue import add_to_queue
 
-from utils import only_with_value, map_to_kv
+from utils import map_fetch_one, only_with_value, map_to_kv
 
 load_dotenv()
 
@@ -73,6 +76,15 @@ def init():
       store_to_durable_object(final)
       info(f'[CHUNK]: ✅ {i}')
 
+async def async_init():
+  for i in range(2971, 2973):
+    with open(f'meta/chunk{i}.json') as f:
+      info(f'[ASYNC INIT]: 🎲 Starting at {i} of {START_AT + OFFSET}')
+      meta = load(f)
+      await add_to_queue(list(map(map_fetch_one, meta)))
+
+  
+
 def full_init():
   with open('meta.json') as meta_file:
       meta = load(meta_file)
@@ -85,4 +97,4 @@ def full_init():
 if __name__ == '__main__':
   basicConfig(format='%(levelname)s: %(message)s', level=INFO)
   info('[APP]: Running')
-  init()
+  asyncio.run(dispatch(async_init), debug=True)
