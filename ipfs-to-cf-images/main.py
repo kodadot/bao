@@ -77,7 +77,7 @@ def init():
       info(f'[CHUNK]: ✅ {i}')
 
 async def async_init():
-  for i in range(2971, 2973):
+  for i in range(2970, 2972):
     with open(f'meta/chunk{i}.json') as f:
       info(f'[ASYNC INIT]: 🎲 Starting at {i} of {START_AT + OFFSET}')
       meta = load(f)

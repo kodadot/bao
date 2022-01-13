@@ -1,6 +1,6 @@
 from logging import info, warn
 from collections import namedtuple
-from aiohttp import ClientSession
+from aiohttp import ClientSession, FormData
 from os import getenv
 from requests import post as post_request
 from dotenv import load_dotenv
@@ -43,13 +43,28 @@ async def post(session, url, body):
         return response   
 
 async def post_file(session, url, body, headers=HEADERS):
-    async with session.post(url, data=body, headers=headers) as response:
-        if response.status == 200:
-          val = response.json()
-          return val['result']['id']
-        else: 
-          warn(f'[🔥❌]: {type} https://http.cat/{res.status}')
-          return None
+  async with session.post(url, data=body, headers=headers) as response:
+      if response.status == 200:
+        val = await response.json()
+        return val['result']['id']
+      else: 
+        warn(f'[🔥❌]: {type} https://http.cat/{res.status}')
+        return None
+
+
+def post_file_sync(url, body, headers=HEADERS):
+  res = post_request(url, data=body, headers=headers)
+  if res.status_code == 200:
+    val = res.json()
+    return val['result']['id']
+  else: 
+    info(f'[🔥❌]: {type} https://http.cat/{res.status_code}')
+    return None
+
+async def post_file_async(url, body, headers=HEADERS):
+  async with ClientSession() as session:
+    res = await post_file(session, url, body, headers)
+    return res
 
 Task = namedtuple("Task", ['handler','value'])
 
@@ -73,19 +88,15 @@ async def fetch_one(item):
 async def post_to_cf(value):
   name, content, type, original_id = value
   info(f'[post_to_cf]: {CF_IMAGES_URI} {name}, {type}, {original_id}')
-  files = {'file': (name, content, type)}
-  res = post_request(CF_IMAGES_URI, files=files, headers=HEADERS)
-  info(f'[🔥]: {res.status_code}')
-  if res.status_code == 200:
-    val = res.json()
-    value = val['result']['id']
-    kv = {
-      'key': original_id,
-      'value': value,
-    }
-    await add_task(map_to_durable_object(kv))
-  else: 
-    info(f'[🔥❌]: {res.reason} {name}, {type} https://http.cat/{res.status_code}')
+  # files = {'file': (name, content, type)}
+  form = FormData()
+  form.add_field("file", content, filename=name, content_type=type)
+  res = await post_file_async(CF_IMAGES_URI, form, headers=HEADERS)
+  kv = {
+    'key': original_id,
+    'value': res
+  }
+  await add_task(map_to_durable_object(kv))
   
 
 async def store_to_durable_object(kv):
