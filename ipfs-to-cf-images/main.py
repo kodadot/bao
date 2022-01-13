@@ -95,6 +95,6 @@ def full_init():
       return post_to_cf(all)
 
 if __name__ == '__main__':
-  basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=INFO, datefmt='%Y-%m-%d %H:%M:%S')
+  basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=INFO, datefmt='%H:%M:%S')
   info('[APP]: Running')
   asyncio.run(dispatch(async_init), debug=True)
