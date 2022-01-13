@@ -45,6 +45,7 @@ async def post(session, url, body):
 async def post_file(session, url, body, headers=HEADERS):
   async with session.post(url, data=body, headers=headers) as response:
       if response.status == 200:
+        info(f'[ASYNC 🔥]: {response.status}')
         val = await response.json()
         return val['result']['id']
       else: 
@@ -55,6 +56,7 @@ async def post_file(session, url, body, headers=HEADERS):
 def post_file_sync(url, body, headers=HEADERS):
   res = post_request(url, data=body, headers=headers)
   if res.status_code == 200:
+    info(f'[🔥]: {res.status_code}')
     val = res.json()
     return val['result']['id']
   else: 
@@ -75,19 +77,18 @@ def save_file(file_name, data, path='./'):
 async def fetch_one(item):
   info(f'[fetch_one]: {item}')
   async with ClientSession() as session:
-    print(f'[fetch_one]: {item}')
+    info(f'[🌎]: Fetching {item["id"]}')
     res = await fetch(session, item['value'])
     type = res['type']
     suffix = type.split('/')[1]
     name = item['id'] + '.' + suffix
     content = res['value']
     save_file(name, content, 'res/')
-    info(f'[DONE Fetch one]: {name}')
     await add_task(map_post_to_cf((name, content, type, item['id'])))
 
 async def post_to_cf(value):
   name, content, type, original_id = value
-  info(f'[post_to_cf]: {CF_IMAGES_URI} {name}, {type}, {original_id}')
+  info(f'[🗂]: Processing {name}')
   # files = {'file': (name, content, type)}
   form = FormData()
   form.add_field("file", content, filename=name, content_type=type)
@@ -102,7 +103,8 @@ async def post_to_cf(value):
 async def store_to_durable_object(kv):
   async with ClientSession() as session:
     res = await post(session, CF_DURABLE_OBJECT + '/upload', kv)
-    info(f'[DURABLE OBJECT]: {res.status} {kv}')
+    key = kv['key']
+    info(f'[ASYNC OBJECT]: ❄️  {res.status} {key}')
 
 def map_fetch_one(item):
   return Task(fetch_one, item)
