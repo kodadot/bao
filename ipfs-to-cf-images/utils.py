@@ -96,7 +96,8 @@ async def post_to_cf(value):
     'key': original_id,
     'value': res
   }
-  await add_task(map_to_durable_object(kv))
+  if (res is not None): 
+    await add_task(map_to_durable_object(kv))
   
 
 async def store_to_durable_object(kv):
