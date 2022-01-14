@@ -1,20 +1,14 @@
 from logging import info, warn
 from collections import namedtuple
 from aiohttp import ClientSession, FormData
-from os import getenv
 from requests import post as post_request
-from dotenv import load_dotenv
-
+from headers import CF_IMAGES_URI, HEADERS
 from my_queue import add_task
-load_dotenv()
-ACCOUNT = getenv('ACCOUNT')
-API_KEY = getenv('API_KEY')
 
 PINATA_BASE_API = "https://kodadot.mypinata.cloud/"
 IPFS_PREFIX = "ipfs://"
 FULL_IPFS_PREFIX = "ipfs://ipfs/"
-CF_IMAGES_URI = f"https://api.cloudflare.com/client/v4/accounts/{ACCOUNT}/images/v1"
-HEADERS={"Authorization": f"Bearer {API_KEY}"}
+
 CF_DURABLE_OBJECT = "https://durable-jpeg.kodadot.workers.dev"
 
 def map_to_kv(meta):

@@ -20,3 +20,14 @@ def wib():
       with open(f'meta/chunk{index}.json', 'w') as f:
         dump(chunk, f)
     return len(all)
+
+
+def just_diff():
+  with open('diff.json') as meta_file:
+    unwrapped = load(meta_file)
+    processed = list(filter(only_with_value, map(map_to_kv, unwrapped)))
+    all = list(chunkify(processed, 20))
+    for index, chunk in enumerate(all):
+      with open(f'missing/chunk{index}.json', 'w') as f:
+        dump(chunk, f)
+    return len(all)
