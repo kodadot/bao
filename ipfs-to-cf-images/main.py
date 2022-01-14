@@ -6,7 +6,7 @@ from os import getenv, wait
 from logging import info, basicConfig, INFO
 from signal import signal, SIGINT
 from async_lib import dispatch
-from my_queue import add_to_queue
+from my_queue import add_task, add_to_queue
 
 from utils import map_fetch_one, only_with_value, map_to_kv
 
@@ -81,7 +81,10 @@ async def async_init():
     with open(f'meta/chunk{i}.json') as f:
       info(f'[ASYNC INIT]: 🎲 Starting at {i} of {START_AT + OFFSET}')
       meta = load(f)
-      await add_to_queue(list(map(map_fetch_one, meta)))
+      # mapped = list(map(map_fetch_one, meta))
+      for item in meta:
+        await add_task(map_fetch_one(item))
+      # await add_to_queue(list(map(map_fetch_one, meta)))
 
   
 
