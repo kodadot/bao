@@ -7,6 +7,7 @@ from logging import info, basicConfig, INFO
 from signal import signal, SIGINT
 from async_lib import dispatch
 from my_queue import add_task
+from random_utils import unsanitize
 from sync_lib import fetch_all
 
 from utils import map_fetch_one, map_post_to_cf, only_with_value, map_to_kv
@@ -53,17 +54,6 @@ def full_init():
       info(f'[DONE]: Processing {len(all)} items')
       # return post_to_cf(all)
 
-async def async_last_init():
-  with open('res.txt', 'r') as f:
-    lines = f.readlines()
-    for line in lines:
-      p = line.strip().replace('./', 'opt/res/')
-      with open(p, 'rb') as f:
-        content = f.read()
-        name = p.replace('opt/res/', '')
-        type = 'image/' + name.split('.')[-1]
-        id = name.split('.')[0]
-        await add_task(map_post_to_cf((name, content, type, id)))
 
 if __name__ == '__main__':
   basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=INFO, datefmt='%H:%M:%S')

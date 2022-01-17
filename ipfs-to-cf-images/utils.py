@@ -110,3 +110,6 @@ def map_post_to_cf(maker):
 # Item should be key-value object
 def map_to_durable_object(item):
   return Task(store_to_durable_object, item)
+
+def map_kb_to_tuple(item):
+  return (item['key'], item['value'])

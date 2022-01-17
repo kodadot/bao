@@ -19,16 +19,17 @@ def execute_query(query, variables=None):
 meta_query = gql(
     """
 query missing_meta($keys: [ID!]) {
-  metadataEntities(where: { id_in: $keys }) {
+  meta: metadataEntities(where: { id_in: $keys }) {
     id
     image
-    animationUrl
+    animation_url: animationUrl
   }
 }
 """
 )
 
 def find_meta_by_key_list(keys):
-    return execute_query(meta_query, {'keys': keys})
+    res = execute_query(meta_query, {'keys': keys})
+    return res['meta']
 
 
