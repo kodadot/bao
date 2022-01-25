@@ -4,7 +4,7 @@ import asyncio
 async def dispatch(runner):
     queue = asyncio.Queue()
     await runner(queue)
-    limited_set = LimitedSet(maxsize=5, jozo= queue)
+    limited_set = LimitedSet(maxsize=20, jozo= queue)
 
     try:
         while not queue.empty():
