@@ -36,7 +36,6 @@ def init():
 async def async_init(jozo):
   for i in range(START_AT, START_AT + OFFSET):
     with open(f'missing/chunk{i}.json') as f:
-      info(f'[ASYNC INIT]: 🎲 Starting at {i} of {START_AT + OFFSET}')
       meta = load(f)
     info(f'[ASYNC INIT]: 🎲 Starting at {i} of {START_AT + OFFSET}')
     # mapped = list(map(map_fetch_one, meta))
