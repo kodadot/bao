@@ -33,15 +33,16 @@ def init():
       store_to_durable_object(final)
       info(f'[CHUNK]: ✅ {i}')
 
-async def async_init():
+async def async_init(jozo):
   for i in range(START_AT, START_AT + OFFSET):
     with open(f'missing/chunk{i}.json') as f:
       info(f'[ASYNC INIT]: 🎲 Starting at {i} of {START_AT + OFFSET}')
       meta = load(f)
-      # mapped = list(map(map_fetch_one, meta))
-      for item in meta:
-        await add_task(map_fetch_one(item))
-      # await add_to_queue(list(map(map_fetch_one, meta)))
+    info(f'[ASYNC INIT]: 🎲 Starting at {i} of {START_AT + OFFSET}')
+    # mapped = list(map(map_fetch_one, meta))
+    for item in meta:
+        await add_task(map_fetch_one(item), jozo)
+    # await add_to_queue(list(map(map_fetch_one, meta)))
 
   
 

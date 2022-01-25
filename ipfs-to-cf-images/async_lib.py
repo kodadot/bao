@@ -1,46 +1,42 @@
 import asyncio
-from my_queue import jozo
 
 
 async def dispatch(runner):
-    await runner()
-    limited_set = LimitedSet(maxsize=20)
+    queue = asyncio.Queue()
+    await runner(queue)
+    limited_set = LimitedSet(maxsize=5, jozo= queue)
 
     try:
-        while True:
-            # recursion
-            # item should be url, handler async 
-            if not jozo.empty():
-                task = await jozo.get()
-                handler = task.handler
-                value = task.value
-                await limited_set.add(lambda: asyncio.get_event_loop().create_task(handler(value)))
-            
-            pass  # actual work
+        while not queue.empty():
+            task = await queue.get()
+            handler = task.handler
+            value = task.value
+            await limited_set.add(lambda: asyncio.get_running_loop().create_task(handler(value)))
     except asyncio.CancelledError:
         pass  # cleanup before grateful exit
     
-    await jozo.join()
+    await queue.join()
 
 
 class LimitedSet(set):
-    def __init__(self, *argv, maxsize):
+    def __init__(self, *argv, maxsize, jozo):
         super().__init__(*argv)
         self._maxsize = maxsize
-        self._has_space_fut = asyncio.Future()
-        self._has_space_fut.set_result(True)
+        self._lock = asyncio.Condition()
+        self.jozo = jozo
+
 
     async def add(self, item_factory):
-        # only one coro should wait on this future
-        await self._has_space_fut
-        item = item_factory()
-        super().add(item)
-        item.add_done_callback(lambda X: self.discard(X))
-        item.add_done_callback(lambda X: jozo.task_done())
-        if self._maxsize < len(self):
-            self._has_space_fut = asyncio.Future()
+        async with self._lock:
+            while self._maxsize <= len(self):
+                await self._lock.wait()
+            item = item_factory()
+            super().add(item)
+            item.add_done_callback(lambda X: asyncio.get_running_loop().create_task(self.drop(X)))
+            item.add_done_callback(lambda X: self.jozo.task_done())
 
-    def discard(self, item):
-        super().discard(item)
-        if len(self) < self._maxsize and not self._has_space_fut.done():
-            self._has_space_fut.set_result(True)
+    async def drop(self, item):
+        async with self._lock:
+            self.discard(item)
+            assert self._maxsize > len(self)
+            self._lock.notify_all()
