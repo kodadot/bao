@@ -7,7 +7,7 @@ from utils import map_kb_to_tuple
 
 
 def get_all_stored_images():
-  for i in range(1, 505):
+  for i in range(1, 3):
     params = { 'page': i, 'per_page': 100 }
     res = get_sync(CF_IMAGES_URI, headers=HEADERS, params=params)
     print(f'[🏞]: Page {i} has status {res.status_code}')
