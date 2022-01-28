@@ -8,7 +8,7 @@ from signal import signal, SIGINT
 
 def handle_sigint(signal_received, frame):
   print('\n\nSIGINT or CTRL-C detected. Exiting gracefully')
-  exit(1)
+  exit(0)
 
 signal(SIGINT, handle_sigint)
 

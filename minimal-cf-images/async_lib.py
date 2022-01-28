@@ -1,4 +1,6 @@
 import asyncio
+from logging import warn
+from signal import raise_signal, SIGINT
 
 
 async def dispatch(runner):
@@ -15,8 +17,13 @@ async def dispatch(runner):
     except asyncio.CancelledError:
         pass  # cleanup before grateful exit
     
+    asyncio.get_running_loop().create_task(dirty_exit())
     await queue.join()
 
+async def dirty_exit():
+    warn('⚠️⚠️ [APP]: will be dead in 2 min ⚠️⚠️')
+    await asyncio.sleep(120) # 5 minutes
+    raise_signal(SIGINT)
 
 class LimitedSet(set):
     def __init__(self, *argv, maxsize, jozo):
