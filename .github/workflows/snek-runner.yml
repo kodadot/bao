@@ -2,6 +2,8 @@ name: Update Cloudflare Images
 on:
   schedule:
     - cron: "*/30 * * * *"
+  label:
+    types: [created]
 
 defaults:
   run:
