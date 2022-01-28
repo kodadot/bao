@@ -11,3 +11,6 @@ def unwrap_or_default(value, default):
   if value is None:
     return default
   return value
+
+def only_with_value(meta):
+  return meta['value'] != ''

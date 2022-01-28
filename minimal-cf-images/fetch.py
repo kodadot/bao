@@ -6,7 +6,7 @@ from headers import CF_IMAGES_URI, HEADERS
 
 from my_queue import add_task
 from tasks import Task
-from utils import map_to_kv
+from utils import map_to_kv, only_with_value
 
 
 async def fetch(session, url):
@@ -62,7 +62,7 @@ async def fetch_last_minted_nfts():
     async with session.post(SUBSQUID_API, json=kv) as response:
       val = await response.json()
       data = map(unwrap, val['data']['nFTEntities'])
-      return list(map(map_to_kv, data))
+      return list(filter(only_with_value, map(map_to_kv, data)))
 
 async def fetch_one(item):
   async with ClientSession() as session:
