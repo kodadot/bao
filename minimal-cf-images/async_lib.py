@@ -21,8 +21,9 @@ async def dispatch(runner):
     await queue.join()
 
 async def dirty_exit():
-    warn('⚠️⚠️ [APP]: will be dead in 2 min ⚠️⚠️')
-    await asyncio.sleep(120) # 5 minutes
+    sleep_for = 50
+    warn(f'⚠️⚠️ [APP]: will be dead in {sleep_for} sec ⚠️⚠️')
+    await asyncio.sleep(sleep_for) # 5 minutes
     raise_signal(SIGINT)
 
 class LimitedSet(set):
