@@ -6,7 +6,15 @@ from headers import CF_IMAGES_URI, HEADERS
 
 from my_queue import add_task
 from tasks import Task
+from utils import map_to_kv
 
+
+async def fetch(session, url):
+    async with session.get(url) as response:
+        return {
+          'type': response.headers['Content-Type'],
+          'value': await response.read()
+        } 
 
 async def post_file(session, url, body, headers=HEADERS, name=''):
   async with session.post(url, data=body, headers=headers) as response:
@@ -49,10 +57,26 @@ async def post_to_cf(value):
 
 async def fetch_last_minted_nfts():
   kv = last_minted_query()
+  unwrap = lambda x: x['meta']
   async with ClientSession() as session:
-    res = await post(session, SUBSQUID_API, kv)
-    data = await res.json()
-    return data['data']['nFTEntities']
+    async with session.post(SUBSQUID_API, json=kv) as response:
+      val = await response.json()
+      data = map(unwrap, val['data']['nFTEntities'])
+      return list(map(map_to_kv, data))
+
+async def fetch_one(item):
+  async with ClientSession() as session:
+    info(f'[🌎]: Fetching {item["id"]}')
+    res = await fetch(session, item['value'])
+    type = res['type']
+    suffix = type.split('/')[1]
+    name = item['id'] + '.' + suffix
+    content = res['value']
+    # save_file(name, content, 'res/')
+    await add_task(map_post_to_cf((name, content, type, item['id'])))
+
+def map_fetch_one(item):
+  return Task(fetch_one, item)
 
 # name, value, type, original_id
 def map_post_to_cf(maker):
