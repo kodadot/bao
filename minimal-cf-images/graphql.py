@@ -7,7 +7,7 @@ def last_minted_query():
   return {
     "query": LAST_MINTED_QUERY,
     "variables": {
-      "ago": graphql_ago(30)
+      "ago": graphql_ago(240)
     },
     "operationName": "lastMinted"
   }

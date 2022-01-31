@@ -4,8 +4,7 @@ from constants import CF_DURABLE_OBJECT, SUBSQUID_API
 from graphql import last_minted_query
 from headers import CF_IMAGES_URI, HEADERS
 
-from my_queue import add_task
-from tasks import Task
+from limited_dispatch import LimitedDispatch
 from utils import map_to_kv, only_with_value
 
 
@@ -52,8 +51,9 @@ async def post_to_cf(value):
     'key': original_id,
     'value': res
   }
-  if (res is not None): 
-    await add_task(map_to_durable_object(kv))
+  if (res is not None):
+    ld = LimitedDispatch.getInstance()
+    await ld.add(store_to_durable_object(kv))
 
 async def fetch_last_minted_nfts():
   kv = last_minted_query()
@@ -68,20 +68,24 @@ async def fetch_one(item):
   async with ClientSession() as session:
     info(f'[🌎]: Fetching {item["id"]}')
     res = await fetch(session, item['value'])
-    type = res['type']
-    suffix = type.split('/')[1]
-    name = item['id'] + '.' + suffix
-    content = res['value']
-    # save_file(name, content, 'res/')
-    await add_task(map_post_to_cf((name, content, type, item['id'])))
+  type = res['type']
+  suffix = type.split('/')[1]
+  name = item['id'] + '.' + suffix
+  content = res['value']
+  # save_file(name, content, 'res/')
+  ld = LimitedDispatch.getInstance()
+  await ld.add(post_to_cf((name, content, type, item['id'])))
 
+@DeprecationWarning
 def map_fetch_one(item):
   return Task(fetch_one, item)
 
 # name, value, type, original_id
+@DeprecationWarning
 def map_post_to_cf(maker):
   return Task(post_to_cf, maker)
 
 # Item should be key-value object
+@DeprecationWarning
 def map_to_durable_object(item):
   return Task(store_to_durable_object, item)

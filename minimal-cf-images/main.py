@@ -2,9 +2,9 @@
 import asyncio
 from logging import info, basicConfig, INFO, raiseExceptions
 from async_lib import dispatch
-from fetch import fetch_last_minted_nfts, map_fetch_one
-from my_queue import add_task
+from fetch import fetch_last_minted_nfts, fetch_one
 from signal import signal, SIGINT
+from limited_dispatch import LimitedDispatch
 
 def handle_sigint(signal_received, frame):
   print('\n\nSIGINT or CTRL-C detected. Exiting gracefully')
@@ -12,10 +12,14 @@ def handle_sigint(signal_received, frame):
 
 signal(SIGINT, handle_sigint)
 
-async def async_init(jozo):
+
+async def async_init():
   meta = await fetch_last_minted_nfts()
+  info('[init]: meta fetched' )
+  ld = LimitedDispatch.getInstance()
   for item in meta:
-    await add_task(map_fetch_one(item), jozo)
+    await ld.add(fetch_one(item))
+    #await add_task(map_fetch_one(item), jozo)
 
 if __name__ == '__main__':
   basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=INFO, datefmt='%H:%M:%S')
