@@ -15,7 +15,6 @@ signal(SIGINT, handle_sigint)
 
 async def async_init():
   meta = await fetch_last_minted_nfts()
-  info('[init]: meta fetched' )
   ld = LimitedDispatch.getInstance()
   for item in meta:
     await ld.add(fetch_one(item))
