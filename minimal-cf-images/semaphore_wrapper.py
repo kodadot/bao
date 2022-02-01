@@ -7,6 +7,11 @@ class Semaphore:
 
     def getInstance(*args, **kwargs):
         if Semaphore._instance is None:
+            try:
+                asyncio.current_task()
+            except RuntimeError:
+                logging.error("Semaphore.getInstance: please create instance inside event loop.")
+                raise
             Semaphore._instance = Semaphore._SemaphoreWrapper(*args, **kwargs)
         return Semaphore._instance
 
