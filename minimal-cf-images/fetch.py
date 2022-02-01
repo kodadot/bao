@@ -4,7 +4,7 @@ from constants import CF_DURABLE_OBJECT, SUBSQUID_API
 from graphql import last_minted_query
 from headers import CF_IMAGES_URI, HEADERS
 
-from limited_dispatch import LimitedDispatch
+from semaphore_wrapper import Semaphore
 from utils import map_to_kv, only_with_value
 
 
@@ -52,8 +52,8 @@ async def post_to_cf(value):
     'value': res
   }
   if (res is not None):
-    ld = LimitedDispatch.getInstance()
-    await ld.add(store_to_durable_object(kv))
+    semaphore = Semaphore.getInstance()
+    semaphore.add(store_to_durable_object(kv))
 
 async def fetch_last_minted_nfts():
   kv = last_minted_query()
@@ -73,19 +73,5 @@ async def fetch_one(item):
   name = item['id'] + '.' + suffix
   content = res['value']
   # save_file(name, content, 'res/')
-  ld = LimitedDispatch.getInstance()
-  await ld.add(post_to_cf((name, content, type, item['id'])))
-
-@DeprecationWarning
-def map_fetch_one(item):
-  return Task(fetch_one, item)
-
-# name, value, type, original_id
-@DeprecationWarning
-def map_post_to_cf(maker):
-  return Task(post_to_cf, maker)
-
-# Item should be key-value object
-@DeprecationWarning
-def map_to_durable_object(item):
-  return Task(store_to_durable_object, item)
+  semaphore = Semaphore.getInstance()
+  semaphore.add(post_to_cf((name, content, type, item['id'])))
