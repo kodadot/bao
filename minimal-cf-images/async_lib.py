@@ -1,6 +1,5 @@
 import asyncio
-import logging
-from logging import warning
+from logging import warning, debug
 from signal import raise_signal, SIGINT
 
 
@@ -9,7 +8,7 @@ async def dispatch(init):
 
     while True:
         pending = asyncio.all_tasks() - {asyncio.current_task()}
-        logging.debug("dispatch(): num of pending tasks=%d"%len(pending))
+        debug("dispatch(): num of pending tasks=%d"%len(pending))
         if len(pending) <= 0:
             break
         await asyncio.gather(*pending)
