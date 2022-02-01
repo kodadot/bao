@@ -1,5 +1,5 @@
 from aiohttp import ClientSession, FormData
-from logging import info, warn
+from logging import info, warning
 from constants import CF_DURABLE_OBJECT, SUBSQUID_API
 from graphql import last_minted_query
 from headers import CF_IMAGES_URI, HEADERS
@@ -21,8 +21,8 @@ async def post_file(session, url, body, headers=HEADERS, name=''):
         info(f'[ASYNC 🔥]: {response.status} {name}')
         val = await response.json()
         return val['result']['id']
-      else: 
-        warn(f'[🔥❌]: {name} https://http.cat/{response.status}')
+      else:
+        warning(f'[🔥❌]: {name} https://http.cat/{response.status}')
         return None
 
 async def post_file_async(url, body, headers=HEADERS, name=''):

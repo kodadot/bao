@@ -1,6 +1,6 @@
 
 import asyncio
-from logging import info, basicConfig, INFO, raiseExceptions
+from logging import info, basicConfig, INFO
 from async_lib import dispatch
 from fetch import fetch_last_minted_nfts, fetch_one
 from signal import signal, SIGINT
