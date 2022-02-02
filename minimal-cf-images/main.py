@@ -1,10 +1,10 @@
 
 import asyncio
-from logging import info, basicConfig, INFO, raiseExceptions
+from logging import info, basicConfig, INFO
 from async_lib import dispatch
-from fetch import fetch_last_minted_nfts, map_fetch_one
-from my_queue import add_task
+from fetch import fetch_last_minted_nfts, fetch_one
 from signal import signal, SIGINT
+from semaphore_wrapper import Semaphore
 
 def handle_sigint(signal_received, frame):
   print('\n\nSIGINT or CTRL-C detected. Exiting gracefully')
@@ -12,10 +12,12 @@ def handle_sigint(signal_received, frame):
 
 signal(SIGINT, handle_sigint)
 
-async def async_init(jozo):
+
+async def async_init():
   meta = await fetch_last_minted_nfts()
+  sem = Semaphore.getInstance()
   for item in meta:
-    await add_task(map_fetch_one(item), jozo)
+    sem.add(fetch_one(item))
 
 if __name__ == '__main__':
   basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=INFO, datefmt='%H:%M:%S')

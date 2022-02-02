@@ -1,11 +1,10 @@
 from aiohttp import ClientSession, FormData
-from logging import info, warn
+from logging import info, warning
 from constants import CF_DURABLE_OBJECT, SUBSQUID_API
 from graphql import last_minted_query
 from headers import CF_IMAGES_URI, HEADERS
 
-from my_queue import add_task
-from tasks import Task
+from semaphore_wrapper import Semaphore
 from utils import map_to_kv, only_with_value
 
 
@@ -22,8 +21,8 @@ async def post_file(session, url, body, headers=HEADERS, name=''):
         info(f'[ASYNC 🔥]: {response.status} {name}')
         val = await response.json()
         return val['result']['id']
-      else: 
-        warn(f'[🔥❌]: {name} https://http.cat/{response.status}')
+      else:
+        warning(f'[🔥❌]: {name} https://http.cat/{response.status}')
         return None
 
 async def post_file_async(url, body, headers=HEADERS, name=''):
@@ -52,8 +51,9 @@ async def post_to_cf(value):
     'key': original_id,
     'value': res
   }
-  if (res is not None): 
-    await add_task(map_to_durable_object(kv))
+  if (res is not None):
+    semaphore = Semaphore.getInstance()
+    semaphore.add(store_to_durable_object(kv))
 
 async def fetch_last_minted_nfts():
   kv = last_minted_query()
@@ -68,20 +68,10 @@ async def fetch_one(item):
   async with ClientSession() as session:
     info(f'[🌎]: Fetching {item["id"]}')
     res = await fetch(session, item['value'])
-    type = res['type']
-    suffix = type.split('/')[1]
-    name = item['id'] + '.' + suffix
-    content = res['value']
-    # save_file(name, content, 'res/')
-    await add_task(map_post_to_cf((name, content, type, item['id'])))
-
-def map_fetch_one(item):
-  return Task(fetch_one, item)
-
-# name, value, type, original_id
-def map_post_to_cf(maker):
-  return Task(post_to_cf, maker)
-
-# Item should be key-value object
-def map_to_durable_object(item):
-  return Task(store_to_durable_object, item)
+  type = res['type']
+  suffix = type.split('/')[1]
+  name = item['id'] + '.' + suffix
+  content = res['value']
+  # save_file(name, content, 'res/')
+  semaphore = Semaphore.getInstance()
+  semaphore.add(post_to_cf((name, content, type, item['id'])))
