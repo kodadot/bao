@@ -1,7 +1,7 @@
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
 
-GRAPHQL_URL='https://app.gc.subsquid.io/beta/rubick/004/graphql'
+GRAPHQL_URL = "https://app.gc.subsquid.io/beta/rubick/007/graphql"
 
 
 transport = RequestsHTTPTransport(
@@ -18,7 +18,7 @@ def execute_query(query, variables=None):
 
 meta_query = gql(
     """
-query missing_meta($keys: [ID!]) {
+query missing_meta($keys: [String!]) {
   meta: metadataEntities(where: { id_in: $keys }) {
     id
     image
