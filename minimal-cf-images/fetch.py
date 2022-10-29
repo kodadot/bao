@@ -61,7 +61,7 @@ async def fetch_last_minted_nfts():
   async with ClientSession() as session:
     async with session.post(SUBSQUID_API, json=kv) as response:
       val = await response.json()
-      data = map(unwrap, val['data']['nFTEntities'])
+      data = map(unwrap, val['data']['nftEntities'])
       return list(filter(only_with_value, map(map_to_kv, data)))
 
 async def fetch_one(item):
