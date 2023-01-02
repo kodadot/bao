@@ -1,5 +1,6 @@
 from aiohttp import ClientSession, FormData
 from logging import info, warning
+from cloudflare.rest import post_file_async
 from constants import CF_DURABLE_OBJECT, SUBSQUID_API
 from graphql import last_minted_query
 from headers import CF_IMAGES_URI, HEADERS
@@ -14,21 +15,6 @@ async def fetch(session, url):
           'type': response.headers['Content-Type'],
           'value': await response.read()
         } 
-
-async def post_file(session, url, body, headers=HEADERS, name=''):
-  async with session.post(url, data=body, headers=headers) as response:
-      if response.status == 200:
-        info(f'[ASYNC 🔥]: {response.status} {name}')
-        val = await response.json()
-        return val['result']['id']
-      else:
-        warning(f'[🔥❌]: {name} https://http.cat/{response.status}')
-        return None
-
-async def post_file_async(url, body, headers=HEADERS, name=''):
-  async with ClientSession() as session:
-    res = await post_file(session, url, body, headers, name)
-    return res
 
 async def post(session, url, body):
     async with session.post(url, json=body) as response:
