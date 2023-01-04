@@ -1,6 +1,6 @@
 from aiohttp import ClientSession, FormData
 from logging import info, warning
-from headers import HEADERS
+from cloudflare.headers import HEADERS
 
 async def fetch(session, url):
     async with session.get(url) as response:
