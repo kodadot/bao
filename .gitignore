@@ -2,4 +2,5 @@
 .vscode
 .env
 meta/
-__pycache__/  
+__pycache__/ 
+*.sh 
