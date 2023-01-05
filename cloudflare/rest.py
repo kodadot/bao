@@ -13,6 +13,10 @@ async def post(session, url, body):
     async with session.post(url, json=body) as response:
         return response   
 
+async def delete(session, url, headers):
+    async with session.delete(url, headers=headers) as response:
+        return response  
+
 async def post_file(session, url, body, headers=HEADERS, name=''):
   async with session.post(url, data=body, headers=headers) as response:
       if response.status == 200:
@@ -28,4 +32,12 @@ async def post_file_async(url, body, headers=HEADERS, name=''):
     res = await post_file(session, url, body, headers, name)
     return res
 
-
+async def delete_file_async(url, headers=HEADERS, name=''):
+  async with ClientSession() as session:
+    res = await delete(session, url, headers)
+    if res.status == 200:
+      info(f'[REMOVING OK 🔥]: {res.status} {name}')
+      return res
+    else:
+        warning(f'[REMOVING NO ❌]: {name} https://http.cat/{res.status}')
+        return None
