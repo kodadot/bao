@@ -1,1 +1,6 @@
 .DS_Store
+.vscode
+.env
+meta/
+__pycache__/ 
+*.sh 

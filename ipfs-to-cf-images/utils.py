@@ -13,7 +13,7 @@ CF_DURABLE_OBJECT = "https://durable-jpeg.kodadot.workers.dev"
 
 def map_to_kv(meta):
   return {
-    'id': meta['id'].replace(FULL_IPFS_PREFIX, ""),
+    'id': unwrap_or_default(meta['image'], '').replace(FULL_IPFS_PREFIX, ""),
     'value': unwrap_or_default(meta['image'], '').replace(IPFS_PREFIX, PINATA_BASE_API),
   }
 
